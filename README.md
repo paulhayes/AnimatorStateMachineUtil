@@ -5,7 +5,7 @@ Utility class that provides ability to tag methods in Monobehaviours to receive 
 
 ## Usage
 
-Any monobehaviour you want to receive state notifiactions of an Animator must be present on the same GameObject as the Animator.
+Any monobehaviour you want to receive state notifiactions of an Animator must be present on the same GameObject as the Animator. Add the AnimatorStateMachineUtil component to the Animator's GameObject, if you want your methods to receive the Update tag without you explicitly calling the `AnimatorStateMachineUtil.StateMachineUpdate()` method, check the autoUpdate option on the component inspector.
 
 Include the namespace at the top of your monobehaviour
 ```
