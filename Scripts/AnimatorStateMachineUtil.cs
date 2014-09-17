@@ -61,11 +61,14 @@ namespace AnimatorStateMachineUtil
             }
 
         }
+        
+		void OnValidate(){		
+			DiscoverStateMethods();
+		}
 
         public void StateMachineUpdate()
         {
             int stateId = _animator.GetCurrentAnimatorStateInfo(0).nameHash;
-            
             if (_lastState != stateId)
             {
 
