@@ -5,12 +5,14 @@ Utility class that provides ability to tag methods in Monobehaviours to receive 
 
 ## Usage
 
+Any monobehaviour you want to receive state notifiactions of an Animator must be present on the same GameObject as the Animator.
+
 Include the namespace at the top of your monobehaviour
 ```
 using AnimatorStateMachineUtil;
 ```
 
-
+Then label any methods you want to receive notification. There are three State Attributes supported, StateEnterMethod, StateUpdateMethod and StateExitMethod. The name of your method is not important, but the method must be public. You can Add these attributes to as many Monobehaviours as you want on the Animator's GameObject.
 ```	
 	[StateEnterMethod("Layer.StateName")]
 	public void EnteredStateName()
