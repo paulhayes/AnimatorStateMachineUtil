@@ -1,6 +1,9 @@
 AnimatorStateMachineUtil
 ========================
 
+__This library was written before Unity implemented StateMachineBehaviour, which acheives similar things, but natively.__
+
+
 Utility class that provides ability to tag methods in Monobehaviours to receive notifications about Animator state changes.
 
 ## Usage
