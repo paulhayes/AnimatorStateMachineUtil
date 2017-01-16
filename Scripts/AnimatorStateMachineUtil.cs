@@ -45,11 +45,13 @@ namespace AnimatorStateMachineUtil
         protected Lookup<int,Action> stateHashToEnterMethod;
         protected Lookup<int,Action> stateHashToExitMethod;
         protected Dictionary<int,string> hashToAnimString;
-        protected int _lastState;
+        protected int[] _lastStateLayers;
 
         void Awake()
         {
             _animator = GetComponent<Animator>();
+            _lastStateLayers = new int[_animator.layerCount];
+
             DiscoverStateMethods();
         }
         
@@ -68,42 +70,48 @@ namespace AnimatorStateMachineUtil
 
         public void StateMachineUpdate()
         {
-            int stateId = _animator.GetCurrentAnimatorStateInfo(0).nameHash;
-            if (_lastState != stateId)
-            {
-
-                if (stateHashToExitMethod.Contains(_lastState))
+            for(int layer=0;layer<_lastStateLayers.Length;layer++){
+                int _lastState = _lastStateLayers[layer];
+                int stateId = _animator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
+                if (_lastState != stateId)
                 {
-                    foreach( Action action in stateHashToExitMethod[_lastState])
+
+                    if (stateHashToExitMethod.Contains(_lastState))
+                    {
+                        foreach( Action action in stateHashToExitMethod[_lastState])
+                        {
+                            action.Invoke();
+                        }
+                    }
+
+                    if (stateHashToEnterMethod.Contains(stateId))
+                    {
+                        foreach( Action action in stateHashToEnterMethod[stateId])
+                        {
+                            action.Invoke();
+                        }
+                       
+                    }
+                }
+                
+                if (stateHashToUpdateMethod.Contains(stateId))
+                {
+                    foreach( Action action in stateHashToUpdateMethod[stateId])
                     {
                         action.Invoke();
                     }
+
                 }
 
-                if (stateHashToEnterMethod.Contains(stateId))
-                {
-                    foreach( Action action in stateHashToEnterMethod[stateId])
-                    {
-                        action.Invoke();
-                    }
-                   
-                }
-            }
-            
-            if (stateHashToUpdateMethod.Contains(stateId))
-            {
-                foreach( Action action in stateHashToUpdateMethod[stateId])
-                {
-                    action.Invoke();
-                }
-
+                _lastStateLayers[layer] = stateId;
             }
 
-            _lastState = stateId;
         }
         
         void DiscoverStateMethods()
         {
+            
+
             hashToAnimString = new Dictionary<int, string>();
             var components = gameObject.GetComponents<MonoBehaviour>();
 
