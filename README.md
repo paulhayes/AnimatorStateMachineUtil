@@ -16,7 +16,7 @@ using AnimatorStateMachineUtil;
 ```
 
 Then label any methods you want to receive notification. There are three State Attributes supported, StateEnterMethod, StateUpdateMethod and StateExitMethod. The name of your method is not important, but the method must be public. You can Add these attributes to as many Monobehaviours as you want on the Animator's GameObject.
-```	
+```csharp
 	[StateEnterMethod("Layer.StateName")]
 	public void EnteredStateName()
 	{
@@ -41,7 +41,7 @@ Then label any methods you want to receive notification. There are three State A
 
 Multiple state attrbiutes are supported on individual methods. Mutliple methods can be called on any state, like so:
 
-```	
+```csharp	
 
 	[StateEnterMethod("Layer.FirstState")]
 	[StateEnterMethod("Layer.AnotherState")]
