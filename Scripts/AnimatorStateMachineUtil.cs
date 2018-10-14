@@ -29,7 +29,7 @@ using System.Reflection;
 
 namespace AnimatorStateMachineUtil
 {
-    public class FSMUtil : MonoBehaviour
+    public class AnimatorStateMachineUtil : MonoBehaviour
     {
         public bool autoUpdate;
 
