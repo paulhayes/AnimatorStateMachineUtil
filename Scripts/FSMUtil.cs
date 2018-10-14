@@ -52,7 +52,6 @@ namespace AnimatorStateMachineUtil
         private Dictionary<int, List<Action>> stateHashToUpdateMethod = new Dictionary<int, List<Action>>();
         private Dictionary<int, List<Action>> stateHashToEnterMethod = new Dictionary<int, List<Action>>();
         private Dictionary<int, List<Action>> stateHashToExitMethod = new Dictionary<int, List<Action>>();
-        private Dictionary<int, string> hashToAnimString;
         private int[] _lastStateLayers;
 
         void Awake() {
@@ -102,7 +101,6 @@ namespace AnimatorStateMachineUtil
         }
 
         void DiscoverStateMethods() {
-            hashToAnimString = new Dictionary<int, string>();
             MonoBehaviour[] components = gameObject.GetComponents<MonoBehaviour>();
 
             stateHashToUpdateMethod.Clear();
