@@ -27,11 +27,24 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace AnimatorStateMachineUtil
+namespace AnimatorStateMachineLibrary
 {
     public class AnimatorStateMachineUtil : MonoBehaviour
     {
-        public bool autoUpdate;
+        private static Dictionary<Animator, List<AnimatorStateMachineUtil>> fsmUtilsByAnimator = new Dictionary<Animator, List<AnimatorStateMachineUtil>>();
+        public static AnimatorStateMachineUtil GetFSMUtilFromAnimator(Animator _animator) {
+            List<AnimatorStateMachineUtil> utils;
+            fsmUtilsByAnimator.TryGetValue(_animator, out utils);
+            return (utils != null && utils.Count > 0) ? utils[0] : null;
+        }
+
+        public static IList<AnimatorStateMachineUtil> GetFSMUtilsFromAnimator(Animator _animator) {
+            List<AnimatorStateMachineUtil> utils;
+            fsmUtilsByAnimator.TryGetValue(_animator, out utils);
+            return utils;
+        }
+
+        public bool autoUpdate = false;
 
         [SerializeField] private Animator animator;
         public Animator Animator {
@@ -48,6 +61,8 @@ namespace AnimatorStateMachineUtil
             }
         }
 
+        public bool verbose;
+
         private Animator _animator;
         private Dictionary<int, List<Action>> stateHashToUpdateMethod = new Dictionary<int, List<Action>>();
         private Dictionary<int, List<Action>> stateHashToEnterMethod = new Dictionary<int, List<Action>>();
@@ -56,7 +71,22 @@ namespace AnimatorStateMachineUtil
 
         void Awake() {
             _lastStateLayers = new int[Animator.layerCount];
+
+            List<AnimatorStateMachineUtil> utils;
+            if (!fsmUtilsByAnimator.TryGetValue(Animator, out utils)) {
+                utils = new List<AnimatorStateMachineUtil>();
+                fsmUtilsByAnimator.Add(Animator, utils);
+            }
+            utils.Add(this);
+
             DiscoverStateMethods();
+        }
+
+        void OnDestroy() {
+            List<AnimatorStateMachineUtil> utils;
+            if (fsmUtilsByAnimator.TryGetValue(Animator, out utils)) {
+                utils.Remove(this);
+            }
         }
 
         void Update() {
@@ -69,32 +99,47 @@ namespace AnimatorStateMachineUtil
             DiscoverStateMethods();
         }
 
-        public void StateMachineUpdate() {
+        public void CallEnterMethods(int _stateHash) {
             List<Action> actions;
+            if (stateHashToEnterMethod.TryGetValue(_stateHash, out actions)) {
+                foreach (Action action in actions) {
+                    action.Invoke();
+                }
+            }
+        }
 
+        public void CallUpdateMethods(int _stateHash) {
+            List<Action> actions;
+            if (stateHashToUpdateMethod.TryGetValue(_stateHash, out actions)) {
+                foreach (Action action in actions) {
+                    action.Invoke();
+                }
+            }
+        }
+
+        public void CallExitMethod(int _stateHash) {
+            List<Action> actions;
+            if (stateHashToExitMethod.TryGetValue(_stateHash, out actions)) {
+                foreach (Action action in actions) {
+                    action.Invoke();
+                }
+            }
+        }
+
+        public void StateMachineUpdate() {
             for (int layer = 0; layer < _lastStateLayers.Length; layer++) {
                 int _lastState = _lastStateLayers[layer];
                 int stateId = Animator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
                 if (_lastState != stateId) {
-
-                    if (stateHashToExitMethod.TryGetValue(_lastState, out actions)) {
-                        foreach (Action action in actions) {
-                            action.Invoke();
-                        }
+                    if (verbose) {
+                        Debug.LogWarningFormat("State changed for layer {0}", layer);
                     }
 
-                    if (stateHashToEnterMethod.TryGetValue(stateId, out actions)) {
-                        foreach (Action action in actions) {
-                            action.Invoke();
-                        }
-                    }
+                    CallExitMethod(_lastState);
+                    CallEnterMethods(stateId);
                 }
 
-                if (stateHashToUpdateMethod.TryGetValue(stateId, out actions)) {
-                    foreach (Action action in actions) {
-                        action.Invoke();
-                    }
-                }
+                CallUpdateMethods(stateId);
 
                 _lastStateLayers[layer] = stateId;
             }
