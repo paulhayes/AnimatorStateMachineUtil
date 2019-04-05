@@ -59,6 +59,12 @@ namespace AnimatorStateMachineLibrary
                 }
                 return _animator;
             }
+
+            set {
+                UnlinkFromAnimator(_animator);
+                _animator = value;
+                Init();
+            }
         }
 
         public bool verbose;
@@ -70,22 +76,34 @@ namespace AnimatorStateMachineLibrary
         private int[] _lastStateLayers;
 
         void Awake() {
-            _lastStateLayers = new int[Animator.layerCount];
+            Init();
+        }
 
-            List<AnimatorStateMachineUtil> utils;
-            if (!fsmUtilsByAnimator.TryGetValue(Animator, out utils)) {
-                utils = new List<AnimatorStateMachineUtil>();
-                fsmUtilsByAnimator.Add(Animator, utils);
+        private void Init() {
+            if (Animator != null) {
+                _lastStateLayers = new int[Animator.layerCount];
+
+                List<AnimatorStateMachineUtil> utils;
+                if (!fsmUtilsByAnimator.TryGetValue(Animator, out utils)) {
+                    utils = new List<AnimatorStateMachineUtil>();
+                    fsmUtilsByAnimator.Add(Animator, utils);
+                }
+                utils.Add(this);
+
+                DiscoverStateMethods();
             }
-            utils.Add(this);
-
-            DiscoverStateMethods();
         }
 
         void OnDestroy() {
-            List<AnimatorStateMachineUtil> utils;
-            if (fsmUtilsByAnimator.TryGetValue(Animator, out utils)) {
-                utils.Remove(this);
+            UnlinkFromAnimator(Animator);
+        }
+
+        private void UnlinkFromAnimator(Animator _linkedAnimator) {
+            if (_linkedAnimator != null) {
+                List<AnimatorStateMachineUtil> utils;
+                if (fsmUtilsByAnimator.TryGetValue(_linkedAnimator, out utils)) {
+                    utils.Remove(this);
+                }
             }
         }
 
@@ -127,21 +145,23 @@ namespace AnimatorStateMachineLibrary
         }
 
         public void StateMachineUpdate() {
-            for (int layer = 0; layer < _lastStateLayers.Length; layer++) {
-                int _lastState = _lastStateLayers[layer];
-                int stateId = Animator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
-                if (_lastState != stateId) {
-                    if (verbose) {
-                        Debug.LogWarningFormat("State changed for layer {0}", layer);
+            if (Animator != null) {
+                for (int layer = 0; layer < _lastStateLayers.Length; layer++) {
+                    int _lastState = _lastStateLayers[layer];
+                    int stateId = Animator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
+                    if (_lastState != stateId) {
+                        if (verbose) {
+                            Debug.LogWarningFormat("State changed for layer {0}", layer);
+                        }
+
+                        CallExitMethod(_lastState);
+                        CallEnterMethods(stateId);
                     }
 
-                    CallExitMethod(_lastState);
-                    CallEnterMethods(stateId);
+                    CallUpdateMethods(stateId);
+
+                    _lastStateLayers[layer] = stateId;
                 }
-
-                CallUpdateMethods(stateId);
-
-                _lastStateLayers[layer] = stateId;
             }
         }
 
